@@ -25,6 +25,7 @@ const useGoogleLogin = ({
   prompt
 }) => {
   const [loaded, setLoaded] = useState(false)
+  const [code, setCode] = useState('')
 
   function handleSigninSuccess(res) {
     /*
@@ -47,6 +48,13 @@ const useGoogleLogin = ({
     onSuccess(res)
   }
 
+  useEffect(() => {
+    if (code) {
+      const GoogleAuth = window.gapi.auth2.getAuthInstance()
+      onSuccess({ code, ...GoogleAuth.currentUser.get() })
+    }
+  }, [code])
+
   function signIn(e) {
     if (e) {
       e.preventDefault() // to prevent submit if used within form
@@ -59,7 +67,7 @@ const useGoogleLogin = ({
       onRequest()
       if (responseType === 'code') {
         GoogleAuth.grantOfflineAccess(options).then(
-          res => onSuccess(res),
+          res => setCode(res.code),
           err => onFailure(err)
         )
       } else {
