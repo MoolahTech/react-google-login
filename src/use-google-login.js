@@ -25,8 +25,6 @@ const useGoogleLogin = ({
   prompt
 }) => {
   const [loaded, setLoaded] = useState(false)
-  const [code, setCode] = useState('')
-
   function handleSigninSuccess(res) {
     /*
       offer renamed response keys to names that match use
@@ -48,13 +46,6 @@ const useGoogleLogin = ({
     onSuccess(res)
   }
 
-  useEffect(() => {
-    if (code) {
-      const GoogleAuth = window.gapi.auth2.getAuthInstance()
-      onSuccess({ code, ...GoogleAuth.currentUser.get() })
-    }
-  }, [code])
-
   function signIn(e) {
     if (e) {
       e.preventDefault() // to prevent submit if used within form
@@ -67,7 +58,18 @@ const useGoogleLogin = ({
       onRequest()
       if (responseType === 'code') {
         GoogleAuth.grantOfflineAccess(options).then(
-          res => setCode(res.code),
+          res => {
+            const result = GoogleAuth.currentUser.get()
+            const basicProfile = result.getBasicProfile()
+
+            res.googleId = basicProfile.getId()
+            res.imageUrl = basicProfile.getImageUrl()
+            res.email = basicProfile.getEmail()
+            res.name = basicProfile.getName()
+            res.givenName = basicProfile.getGivenName()
+            res.familyName = basicProfile.getFamilyName()
+            onSuccess(res)
+          },
           err => onFailure(err)
         )
       } else {
